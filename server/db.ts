@@ -1,3 +1,7 @@
+// ...existing code...
+console.log('DEBUG: DATABASE_URL present=', !!process.env.DATABASE_URL, ' (first 60 chars):', process.env.DATABASE_URL ? process.env.DATABASE_URL.slice(0,60) + '...' : undefined);
+// ...existing code...
+// 
 import { Pool, neonConfig, type PoolConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
