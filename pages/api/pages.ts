@@ -1,39 +1,22 @@
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@supabase/supabase-js';
 
-export default async function handler(req, res) {
-  try {
-    console.log('Create page request body:', req.body);
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-    const supabase = createServerSupabaseClient({ req, res });
+export async function createPageClient(title, content) {
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData?.user) throw new Error('Not authenticated');
 
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+  const { data, error } = await supabase
+    .from('pages')
+    .insert({ title, content, owner: userData.user.id }); // <-- adjust key to your column
 
-    if (sessionError) {
-      console.error('Session error:', sessionError);
-    }
-
-    const user = session?.user;
-    if (!user) {
-      return res.status(401).json({ message: 'Not authenticated' });
-    }
-
-    const { data, error } = await supabase.from('pages').insert({
-      title: req.body.title,
-      content: req.body.content,
-      user_id: user.id,
-    });
-
-    if (error) {
-      console.error('Create page failed:', error);
-      return res.status(500).json({ message: 'Failed to create page', detail: error.message || error });
-    }
-
-    return res.status(201).json({ message: 'Page created successfully', data });
-  } catch (err) {
-    console.error('Create page failed:', err);
-    return res.status(500).json({ message: 'Failed to create page', detail: err.message || err });
-  }
+  if (error) throw error;
+  return data;
 }
+
+// pages/api/pages.ts (server)
+// await supabase.from('pages').insert({
+//   title: req.body.title,
+//   content: req.body.content,
+//   user_id: user.id // atau user_id berdasarkan schema
+// });
